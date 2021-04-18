@@ -1,8 +1,4 @@
-const loadLogsValues = (logs) => {
-  const transactionsStatus = logs
-    .filter((t) => t.type == "transactionStart")
-    .reduce((acc, t) => ({ ...acc, [t.data.name]: false }), {});
-
+const restoreFromLogs = (logs) => {
   const getNewCheckpoint = () => ({
     active: false,
     changes: {},
@@ -13,7 +9,6 @@ const loadLogsValues = (logs) => {
   let values = {};
   let checkpoint = getNewCheckpoint();
   logs.forEach((log) => {
-    console.log({checkpoint, log})
     switch (log.type) {
       case "transactionStart":
         if (checkpoint.active) {
@@ -78,8 +73,15 @@ const loadLogsValues = (logs) => {
     }
   });
 
-  console.log(transactionsActions);
-  console.log(values);
+  const transactionsStatus = Object.entries(transactionsActions).reduce(
+    (acc, [transaction, { commited }]) => ({
+      ...acc,
+      ...{ [transaction]: commited },
+    }),
+    {}
+  );
+
+  return { values, transactionsStatus };
 };
 
-exports.loadLogsValues = loadLogsValues;
+exports.restoreFromLogs = restoreFromLogs;

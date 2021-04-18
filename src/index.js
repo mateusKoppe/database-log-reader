@@ -1,7 +1,7 @@
 require("dotenv").config();
 const readline = require("readline");
-const { generateTable, populateTable } = require("./database");
-const { loadLogsValues } = require("./logs");
+const { generateTable, populateTable, updateValues } = require("./database");
+const { restoreFromLogs } = require("./logs");
 const { getTableConfig, getLogTokens } = require("./tokens");
 
 const app = () => {
@@ -19,7 +19,15 @@ const app = () => {
     const tableConfig = getTableConfig(tableConfigRaw);
     await generateTable("test", tableConfig);
     await populateTable("test", tableConfig);
-    loadLogsValues(logs);
+    const restore = restoreFromLogs(logs);
+    await updateValues("test", restore.values);
+    Object.entries(restore.transactionsStatus).forEach(
+      ([transaction, restored]) => {
+        console.log(
+          `Transaction ${transaction}: ${restored ? "Restored" : "Unrestored"}`
+        );
+      }
+    );
   });
 };
 

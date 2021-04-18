@@ -6,11 +6,10 @@ const populateTable = async (table, tableConfig) => {
 
   const query = `
     INSERT INTO ${table}
-    (${ Object.keys(tableConfig).join(",") })
+    (${Object.keys(tableConfig).join(",")})
     VALUES
-    (${ Object.values(tableConfig).join(",") });
+    (${Object.values(tableConfig).join(",")});
   `;
-
 
   try {
     await client.query(query);
@@ -18,9 +17,9 @@ const populateTable = async (table, tableConfig) => {
   } catch {
     console.log(`Fail to populate table ${table}. Aborting.`);
   }
-  
+
   client.end();
-}
+};
 
 const generateTable = async (table, tableConfig) => {
   const columns = Object.keys(tableConfig);
@@ -31,10 +30,7 @@ const generateTable = async (table, tableConfig) => {
   const query = `
     DROP TABLE IF EXISTS ${table};
     CREATE TABLE ${table} (
-      ${columns
-        .map((column) => `${column} int`)
-        .join(",")
-      }
+      ${columns.map((column) => `${column} int`).join(",")}
     );
   `;
   try {
@@ -46,5 +42,29 @@ const generateTable = async (table, tableConfig) => {
   client.end();
 };
 
+const updateValues = async (table, values) => {
+  const client = new Client();
+  await client.connect();
+
+  const query = `
+    UPDATE ${table} SET
+    ${
+      Object.entries(values)
+        .map(([key, value]) => `${key}=${value}`)
+        .join(",")
+    };
+  `;
+
+  try {
+    await client.query(query);
+    console.log(`Table ${table} restored from logs.`);
+  } catch {
+    console.log(`Fail to restore table ${table} from logs.`);
+  }
+
+  client.end();
+};
+
 exports.generateTable = generateTable;
 exports.populateTable = populateTable;
+exports.updateValues = updateValues;
