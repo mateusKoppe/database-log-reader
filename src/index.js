@@ -1,11 +1,11 @@
 require("dotenv").config();
 const readline = require("readline");
+const { generateTable, populateTable } = require("./database");
 const { getTableConfig, getLogTokens } = require("./tokens");
 
 const app = () => {
   const std = readline.createInterface({
     input: process.stdin,
-    output: process.stdout,
   });
 
   const lines = [];
@@ -14,8 +14,9 @@ const app = () => {
   std.on("close", function () {
     // Get table config on first line and filter empty logs
     const [tableConfigRaw, ...logs] = lines.filter((x) => x);
-    console.log(getTableConfig(tableConfigRaw));
-    console.log(getLogTokens(logs));
+    const tableConfig = getTableConfig(tableConfigRaw);
+    generateTable("test", tableConfig);
+    populateTable("test", tableConfig);
   });
 };
 
