@@ -1,7 +1,22 @@
 require("dotenv").config();
+const readline = require("readline");
+const { getTableConfig } = require("./tokens");
 
 const app = () => {
-  console.log(process.env.PGUSER)
-}
+  const std = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const lines = [];
+
+  std.on("line", (line) => lines.push(line));
+  std.on("close", function () {
+    // Get table config on first line and filter empty logs
+    const [tableConfigRaw, ...logs] = lines.filter(x => x);
+    console.log(getTableConfig(tableConfigRaw));
+    console.log(logs);
+  });
+};
 
 module.exports = app;
