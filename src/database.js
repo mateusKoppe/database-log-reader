@@ -13,9 +13,8 @@ const populateTable = async (table, tableConfig) => {
 
   try {
     await client.query(query);
-    console.log(`Table ${table} populated.`);
   } catch {
-    console.log(`Fail to populate table ${table}. Aborting.`);
+    throw new Error(`Fail to populate table ${table}. Aborting.`);
   }
 
   client.end();
@@ -35,9 +34,8 @@ const generateTable = async (table, tableConfig) => {
   `;
   try {
     await client.query(query);
-    console.log(`Table ${table} created.`);
   } catch {
-    console.log(`Fail to create table ${table}. Aborting.`);
+    throw new Error(`Fail to create table ${table}. Aborting.`);
   }
   client.end();
 };
@@ -48,18 +46,15 @@ const updateValues = async (table, values) => {
 
   const query = `
     UPDATE ${table} SET
-    ${
-      Object.entries(values)
-        .map(([key, value]) => `${key}=${value}`)
-        .join(",")
-    };
+    ${Object.entries(values)
+      .map(([key, value]) => `${key}=${value}`)
+      .join(",")};
   `;
 
   try {
     await client.query(query);
-    console.log(`Table ${table} restored from logs.`);
   } catch {
-    console.log(`Fail to restore table ${table} from logs.`);
+    throw new Error(`Fail to restore table ${table} from logs.`);
   }
 
   client.end();
