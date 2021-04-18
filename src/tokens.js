@@ -33,15 +33,15 @@ const getLogTokens = (lines) => {
       }),
     },
     transactionChange: {
-      regex: /<T(\d+),([A-Z]),(\d+)>/i,
+      regex: /<(T\d+),([A-Z]),(\d+)>/i,
       formatData: (value) => ({
         transaction: value[1],
         column: value[2],
-        value: value[3],
+        value: Number(value[3]),
       }),
     },
     transactionCommit: {
-      regex: /<commit T(\d+)>/i,
+      regex: /<commit (T\d+)>/i,
       formatData: (value) => ({
         transaction: value[1],
       }),
