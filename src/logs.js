@@ -1,3 +1,5 @@
+const { cloneDeep } = require("lodash");
+
 const restoreFromLogs = (logs) => {
   const getNewCheckpoint = () => ({
     active: false,
@@ -54,9 +56,9 @@ const restoreFromLogs = (logs) => {
         checkpoint = {
           active: true,
           actions: {
-            ...transactionsActions,
+            ...cloneDeep(transactionsActions),
           },
-          values: { ...values },
+          values: { ...cloneDeep(values) },
         };
         return;
 
