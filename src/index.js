@@ -40,6 +40,12 @@ const app = () => {
           `Transaction ${transaction}: ${restored ? "Restored" : "Unrestored"}`
         );
       });
+      console.log("New values:");
+      Object.entries(values)
+        .sort(([key], [otherKey]) => (key > otherKey ? 1 : -1))
+        .forEach(([key, value]) => {
+          console.log(` ${key} = ${value}`);
+        });
     } catch (error) {
       console.log(error);
     }
