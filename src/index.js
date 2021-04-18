@@ -3,10 +3,18 @@ const readline = require("readline");
 const { generateTable, populateTable, updateValues } = require("./database");
 const { restoreFromLogs } = require("./logs");
 const { getTableConfig, getLogTokens } = require("./tokens");
-
-const table = "test";
+const minimist = require("minimist");
 
 const app = () => {
+  const args = minimist(process.argv.slice(2));
+
+  if (!args.table) {
+    console.log("You need to inform the table, use the --table flag for it");
+    return;
+  }
+
+  const table = args.table;
+
   const std = readline.createInterface({
     input: process.stdin,
   });
