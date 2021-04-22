@@ -46,17 +46,27 @@ const updateValues = async (table, values) => {
   const client = new Client();
   await client.connect();
 
-  const query = Object.entries(values).reduce((acc, [id, columns]) => `
-    ${acc}
-    UPDATE ${table} SET
-    ${Object.entries(columns)
-      .map(([key, value]) => `${key}=${value}`)
-      .join(",")}
-    WHERE id = ${id};
-  `, "")
-
   try {
-    await client.query(query);
+    const promises = Object.entries(values).map(async ([id, columns]) => {
+      const { rows: [{ count }] } = await client.query(`SELECT count(id) FROM ${table} WHERE id = ${id}`);
+      if (Number(count)) {
+        return await client.query(`
+          UPDATE ${table} SET
+          ${Object.entries(columns)
+            .map(([key, value]) => `${key}=${value}`)
+            .join(",")}
+          WHERE id = ${id};
+        `);
+      } else {
+        return await client.query(`
+          INSERT INTO ${table}
+          (id, ${Object.keys(columns).join(",")})
+          VALUES
+          (${id}, ${Object.values(columns).join(",")});
+        `);
+      }
+    })
+    await Promise.all(promises)
   } catch {
     throw new Error(`Fail to restore table ${table} from logs.`);
   }
