@@ -4,12 +4,13 @@ const populateTable = async (table, tableConfig) => {
   const client = new Client();
   await client.connect();
 
-  const query = `
+  const query = Object.entries(tableConfig).reduce((acc, [id, columns]) => `
+    ${acc}
     INSERT INTO ${table}
-    (${Object.keys(tableConfig).join(",")})
+    (id, ${Object.keys(columns).join(",")})
     VALUES
-    (${Object.values(tableConfig).join(",")});
-  `;
+    (${id}, ${Object.values(columns).join(",")});
+  `, "");
 
   try {
     await client.query(query);
@@ -21,7 +22,7 @@ const populateTable = async (table, tableConfig) => {
 };
 
 const generateTable = async (table, tableConfig) => {
-  const columns = Object.keys(tableConfig);
+  const columns = Object.keys(Object.values(tableConfig)[0]);
   const client = new Client();
   await client.connect();
 
@@ -29,6 +30,7 @@ const generateTable = async (table, tableConfig) => {
   const query = `
     DROP TABLE IF EXISTS ${table};
     CREATE TABLE ${table} (
+      id int primary key,
       ${columns.map((column) => `${column} int`).join(",")}
     );
   `;
@@ -44,12 +46,14 @@ const updateValues = async (table, values) => {
   const client = new Client();
   await client.connect();
 
-  const query = `
+  const query = Object.entries(values).reduce((acc, [id, columns]) => `
+    ${acc}
     UPDATE ${table} SET
-    ${Object.entries(values)
+    ${Object.entries(columns)
       .map(([key, value]) => `${key}=${value}`)
-      .join(",")};
-  `;
+      .join(",")}
+    WHERE id = ${id};
+  `, "")
 
   try {
     await client.query(query);

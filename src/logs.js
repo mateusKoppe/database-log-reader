@@ -1,4 +1,4 @@
-const { cloneDeep } = require("lodash");
+const { cloneDeep, merge } = require("lodash");
 
 const restoreFromLogs = (logs) => {
   const getNewCheckpoint = () => ({
@@ -7,6 +7,13 @@ const restoreFromLogs = (logs) => {
     actions: {},
   });
 
+  const addValue = (values, newValue) =>
+    merge(values, {
+      [newValue.id]: {
+        [newValue.column]: newValue.value
+      }
+    })
+
   let transactionsActions = {};
   let values = {};
   let checkpoint = getNewCheckpoint();
@@ -14,12 +21,12 @@ const restoreFromLogs = (logs) => {
     switch (log.type) {
       case "transactionStart":
         if (checkpoint.active) {
-          checkpoint.actions[log.data.name] = {
+          checkpoint.actions[log.transaction] = {
             commited: false,
             changes: {},
           };
         } else {
-          transactionsActions[log.data.name] = {
+          transactionsActions[log.transaction] = {
             commited: false,
             changes: {},
           };
@@ -28,57 +35,52 @@ const restoreFromLogs = (logs) => {
 
       case "transactionChange":
         if (checkpoint.active) {
-          checkpoint.actions[log.data.transaction].changes[log.data.column] =
-            log.data.value;
+          checkpoint.actions[log.transaction].changes = addValue(
+            checkpoint.actions[log.transaction].changes,
+            log
+          )
         } else {
-          transactionsActions[log.data.transaction].changes[log.data.column] =
-            log.data.value;
+          transactionsActions[log.transaction].changes = addValue(
+            transactionsActions[log.transaction].changes,
+            log
+          )
         }
         return;
 
       case "transactionCommit":
         if (checkpoint.active) {
-          checkpoint.values = {
-            ...checkpoint.values,
-            ...checkpoint.actions[log.data.transaction].changes,
-          };
-          checkpoint.actions[log.data.transaction].commited = true;
+          checkpoint.values = merge(
+            checkpoint.values,
+            checkpoint.actions[log.transaction].changes
+          )
+          checkpoint.actions[log.transaction].commited = true;
         } else {
-          transactionsActions[log.data.transaction].commited = true;
-          values = {
-            ...values,
-            ...transactionsActions[log.data.transaction].changes,
-          };
+          transactionsActions[log.transaction].commited = true;
+          values = merge(
+            values,
+            transactionsActions[log.transaction].changes,
+          )
         }
         return;
 
       case "checkpointStart":
         checkpoint = {
           active: true,
-          actions: {
-            ...cloneDeep(transactionsActions),
-          },
-          values: { ...cloneDeep(values) },
+          actions: cloneDeep(transactionsActions),
+          values: cloneDeep(values),
         };
         return;
 
       case "checkpointEnd":
-        transactionsActions = {
-          ...transactionsActions,
-          ...checkpoint.actions,
-        };
-        values = {
-          ...values,
-          ...checkpoint.values,
-        };
+        transactionsActions = merge(transactionsActions, checkpoint.actions)
+        values = merge(values, checkpoint.values)
         checkpoint = getNewCheckpoint();
     }
   });
 
   const transactionsStatus = Object.entries(transactionsActions).reduce(
-    (acc, [transaction, { commited }]) => ({
-      ...acc,
-      ...{ [transaction]: commited },
+    (acc, [transaction, { commited }]) => merge(acc, {
+      [transaction]: commited,
     }),
     {}
   );

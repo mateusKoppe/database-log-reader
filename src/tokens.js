@@ -1,3 +1,5 @@
+const { merge } = require("lodash");
+
 const getTableConfig = (line) => {
   const tableConfigRegex = /((\s*[a-zA-Z]+=\d+\s*\|)*((\s*[a-zA-Z]+=\d+\s*)))/g;
 
@@ -10,16 +12,15 @@ const getTableConfig = (line) => {
     if (!result) throw new Error(`Fail to get column config on group ${group}`);
     // Return {firstGroup: secondGroup} found in the regex
     return {
-      [result[1]]: Number(result[2]),
+      1: {
+        [result[1]]: Number(result[2]),
+      }
     };
   };
 
   // Sum all groups
   return groups.reduce(
-    (acc, group) => ({
-      ...acc,
-      ...formatGroup(group),
-    }),
+    (acc, group) => merge(acc, formatGroup(group)),
     {}
   );
 };
@@ -29,15 +30,16 @@ const getLogTokens = (lines) => {
     transactionStart: {
       regex: /<start (T\d+)>/i,
       formatData: (value) => ({
-        name: value[1],
+        transaction: value[1],
       }),
     },
     transactionChange: {
-      regex: /<(T\d+),([A-Z]),(\d+)>/i,
+      regex: /<(T\d+),(\d+),([A-Z]),(\d+)>/i,
       formatData: (value) => ({
         transaction: value[1],
-        column: value[2],
-        value: Number(value[3]),
+        id: Number(value[2]),
+        column: value[3],
+        value: Number(value[4]),
       }),
     },
     transactionCommit: {
@@ -47,7 +49,7 @@ const getLogTokens = (lines) => {
       }),
     },
     checkpointStart: {
-      regex: /<start checkpoint\(((T\d+,)+(T\d+))\)>/i,
+      regex: /<start checkpoint\((((T\d+,)+(T\d+))|(T\d+))\)>/i,
       formatData: (value) => ({
         transactions: value[1].split(","),
       }),
@@ -65,7 +67,7 @@ const getLogTokens = (lines) => {
 
     return {
       type: tokenKey,
-      data: tokenTypeHandler.formatData(tokenTypeHandler.regex.exec(value)),
+      ...tokenTypeHandler.formatData(tokenTypeHandler.regex.exec(value)),
     };
   });
 };

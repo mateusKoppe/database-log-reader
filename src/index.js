@@ -43,8 +43,9 @@ const app = () => {
       console.log("New values:");
       Object.entries({ ...tableConfig, ...values })
         .sort(([key], [otherKey]) => (key > otherKey ? 1 : -1))
-        .forEach(([key, value]) => {
-          console.log(` ${key} = ${value}`);
+        .forEach(([id, columns]) => {
+          console.log(`id: ${id}`)
+          Object.entries(columns).forEach(([key, value]) => console.log(`  ${key} = ${value}`))
         });
     } catch (error) {
       console.log(error);
