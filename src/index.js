@@ -48,7 +48,7 @@ const app = () => {
           Object.entries(columns).forEach(([key, value]) => console.log(`  ${key} = ${value}`))
         });
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
     }
   });
 };
