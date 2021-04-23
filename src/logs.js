@@ -14,9 +14,11 @@ const restoreFromLogs = (logs) => {
       }
     })
 
+  let isRedoActive = false
   let transactionsActions = {};
   let values = {};
   let checkpoint = getNewCheckpoint();
+
   logs.forEach((log) => {
     switch (log.type) {
       case "transactionStart":
@@ -48,6 +50,8 @@ const restoreFromLogs = (logs) => {
         return;
 
       case "transactionCommit":
+        if (!isRedoActive) return
+
         if (checkpoint.active) {
           checkpoint.values = merge(
             checkpoint.values,
@@ -64,6 +68,7 @@ const restoreFromLogs = (logs) => {
         return;
 
       case "checkpointStart":
+        isRedoActive = true
         checkpoint = {
           active: true,
           actions: cloneDeep(transactionsActions),
